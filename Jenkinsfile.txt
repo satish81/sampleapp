@@ -12,7 +12,34 @@ import groovy.json.JsonSlurperClassic
 import groovy.json.JsonBuilder
 import groovy.json.JsonOutput
 import java.net.URL
- 
+ stage '\u2776 Stage 1'{
+        node {
+          try {
+            echo 'building...'
+
+        checkout changelog: true,
+                        poll: true,
+                        scm: [$class                           : 'GitSCM',
+                              branches                         : [[name: "origin/${sourceBranch()}"]],
+                              doGenerateSubmoduleConfigurations: false,
+                              extensions                       : [
+                                      [$class: 'PerBuildTag'],
+                                      [$class : 'PreBuildMerge',
+                                       options: [fastForwardMode: 'FF',
+                                                 mergeRemote    : 'origin',
+                                                 mergeStrategy  : 'default',
+                                                 mergeTarget    : "${targetBranch()}"]],
+                                      [$class: 'WipeWorkspace']],
+                              submoduleCfg                     : [],
+                              userRemoteConfigs                : [[credentialsId: '',
+                                                                   name         : 'origin',
+                                                                   refspec      : '+refs/heads/*:refs/remotes/origin/* +refs/merge-requests/*/head:refs/remotes/origin/merge-requests/*',
+                                                                   url          : "${gitUrl()}"]]]
+                                                                   
+                    withCredentials([[$class: 'UsernamePasswordMultiBinding',
+                                    credentialsId: 'gcs-gitlab',
+                                    usernameVariable: 'GIT_USERNAME',
+                                    passwordVariable: 'GIT_PASSWORD']]) {
 try {
 node {
 stage '\u2776 Stage 1'
